@@ -5,8 +5,11 @@
 package it.polito.tdp.food;
 
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import it.polito.tdp.food.model.Model;
+import it.polito.tdp.food.model.VerticeAttraversato;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -40,7 +43,7 @@ public class FoodController {
     private Button btnCammino; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxPorzioni"
-    private ComboBox<?> boxPorzioni; // Value injected by FXMLLoader
+    private ComboBox<String> boxPorzioni; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtResult"
     private TextArea txtResult; // Value injected by FXMLLoader
@@ -48,21 +51,55 @@ public class FoodController {
     @FXML
     void doCammino(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Cerco cammino peso massimo...");
+    	int n;
+    	try {
+    		n = Integer.parseInt(this.txtPassi.getText());
+    	}catch(NumberFormatException e) {
+    		txtResult.appendText("INSERIRE UN VALORE INTERO NEL CAMPO PASSI");
+    		return;
+    	}
+    	if(this.boxPorzioni.getValue() == null) {
+    		txtResult.appendText("PRIMA DI ACCEDERE A QUESTA FUNZIONE ASSICURARSI DI AVER CREATO IL GARFO \nE SCELTO UN TIPO DI PORZIONE DAL MENU A TENDINA");
+    		return;
+    	}
+    
+    	txtResult.appendText("CAMMINO MASSIMO: \n\n");
+    	List<VerticeAttraversato> result = this.model.trovaCammino(this.boxPorzioni.getValue(), n);
+    	for(int i = 1; i< result.size(); i++) {
+    		txtResult.appendText("*"+result.get(i).getNome()+" - peso: "+result.get(i).getPeso()+"\n");
+    	}
+    	txtResult.appendText("CON PESO TOTALE = " + this.model.calcolaPeso(result));
     }
 
     @FXML
     void doCorrelate(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Cerco porzioni correlate...");
     	
+    	String result = "";
+    	String scelta = this.boxPorzioni.getValue();
+    	Map<String, Double> mappa = this.model.getCorrelate(scelta);
+    	
+    	for(String s : mappa.keySet()) {
+    		result += s+ " - " + (mappa.get(s).intValue()+"\n"); 
+    	}
+    	txtResult.appendText("Porzioni connesse a " + scelta + ":\n\n");
+    	txtResult.appendText(result);
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Creazione grafo...");
-    	
+    	this.boxPorzioni.getItems().clear();
+    	Double c = -1.0;
+    	try{
+    		c = Double.parseDouble(this.txtCalorie.getText());
+    	} catch(NumberFormatException e) {
+    		txtResult.appendText("Inserire un valore numerico nel campo calorie!");
+    		return;
+    	}
+    	this.model.creaGrafo(c);
+		this.boxPorzioni.getItems().addAll(this.model.getVertici());	
+
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
